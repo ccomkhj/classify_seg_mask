@@ -17,11 +17,11 @@ from loguru import logger
 class Net(nn.Module):
     def __init__(self, out_ch):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels = 4, out_channels = 32, kernel_size = 7, stride= 1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size = 7, stride = 1)
+        self.conv1 = nn.Conv2d(in_channels = 3, out_channels = 16, kernel_size = 3, stride= 1) # in_channels should be 1, when it is Mask/Gray image.
+        self.conv2 = nn.Conv2d(16, 32, kernel_size = 3, stride = 1)
         self.dropout1 = nn.Dropout(0.25)
         self.dropout2 = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(9216, 128)
+        self.fc1 = nn.Linear(73728, 128)
         self.fc2 = nn.Linear(128, out_ch) # it should be the number of class !
 
     def forward(self, x):
@@ -43,7 +43,7 @@ class Net(nn.Module):
 def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = data.to(device), target.to(device)
+        data, target = data.to(device, dtype=torch.float), target.to(device)
         optimizer.zero_grad()
         output = model(data)
         loss = F.nll_loss(output, target)
@@ -63,7 +63,7 @@ def test(model, device, test_loader):
     correct = 0
     with torch.no_grad():
         for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
+            data, target = data.to(device, dtype=torch.float), target.to(device)
             output = model(data)
             test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
@@ -151,7 +151,7 @@ def main():
             # A.SmallestMaxSize(max_size=350),
             # A.CenterCrop(height=256, width=256),
             # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            A.Resize (height=200, width=200, p=1),
+            A.Resize (height=100, width=100, p=1),
             ToTensorV2(),
         ])
 
