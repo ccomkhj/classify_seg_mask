@@ -71,10 +71,11 @@ def set_files(train_data_path, test_data_path):
 #######################################################
 
 class SymbolDataset(Dataset):
-    def __init__(self, image_paths, class_to_idx, transform=False):
+    def __init__(self, image_paths, class_to_idx, image_type, transform=False):
         self.image_paths = image_paths
         self.transform = transform
         self.class_to_idx = class_to_idx 
+        self.image_type = image_type
         
     def __len__(self):
         return len(self.image_paths)
@@ -82,8 +83,11 @@ class SymbolDataset(Dataset):
     def __getitem__(self, idx):
         image_filepath = self.image_paths[idx]
         image = cv2.imread(image_filepath)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # if input is gray, then it should be changed, too.
-        
+        if self.image_type == 'RGB':
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
+        else:
+            image = image
+
         label = image_filepath.split('/')[-2]
         label = self.class_to_idx[label]
         if self.transform is not None:

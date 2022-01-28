@@ -15,14 +15,14 @@ from loguru import logger
 
 
 class Net(nn.Module):
-    def __init__(self, out_ch):
+    def __init__(self, in_ch, out_ch):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels = 3, out_channels = 16, kernel_size = 3, stride= 1) # in_channels should be 1, when it is Mask/Gray image.
+        self.conv1 = nn.Conv2d(in_channels = in_ch, out_channels = 16, kernel_size = 3, stride= 1) 
         self.conv2 = nn.Conv2d(16, 32, kernel_size = 3, stride = 1)
         self.dropout1 = nn.Dropout(0.25)
         self.dropout2 = nn.Dropout(0.5)
         self.fc1 = nn.Linear(73728, 128)
-        self.fc2 = nn.Linear(128, out_ch) # it should be the number of class !
+        self.fc2 = nn.Linear(128, out_ch) 
 
     def forward(self, x):
         x = self.conv1(x)
@@ -107,7 +107,8 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def main():
+def main(image_type):
+
     # Training settings
     args = parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -161,9 +162,9 @@ def main():
     #                  Create Dataset
     #######################################################
 
-    train_dataset = SymbolDataset(train_image_paths, class_to_idx, train_transforms)
-    valid_dataset = SymbolDataset(valid_image_paths, class_to_idx, test_transforms) #test transforms are applied
-    test_dataset = SymbolDataset(test_image_paths, class_to_idx, test_transforms)
+    train_dataset = SymbolDataset(train_image_paths, class_to_idx, image_type, train_transforms)
+    valid_dataset = SymbolDataset(valid_image_paths, class_to_idx, image_type, test_transforms) #test transforms are applied
+    test_dataset = SymbolDataset(test_image_paths, class_to_idx, image_type, test_transforms)
 
     logger.info('The shape of tensor for the first image in train dataset: ',train_dataset[0][0].shape)
     logger.info('The label for the first image in train dataset: ',train_dataset[0][1])
@@ -176,8 +177,11 @@ def main():
     valid_loader = DataLoader(valid_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
 
+    if image_type == 'RGB': in_ch = 3
+    else: in_ch = 1
     num_class = len(class_to_idx)
-    model = Net(num_class).to(device)
+
+    model = Net(in_ch, num_class).to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
@@ -191,4 +195,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+
+    main(image_type = 'RGB') # RGB or Gray
