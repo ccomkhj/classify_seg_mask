@@ -11,6 +11,8 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from torch.utils.data import DataLoader
 import cv2
+import os
+import numpy as np
 from loguru import logger
 
 
@@ -75,7 +77,13 @@ def test(model, device, test_loader):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
-
+def predict(model, device, images: np.ndarray):
+    model.eval()
+    with torch.no_grad():
+        for image in images:
+            output = model(image)
+            pred = output.argmax(dim=1, deepdim= True)
+            
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a model')
@@ -102,6 +110,7 @@ def parse_args():
                         help='how many batches to wait before logging training status')
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
+    parser.add_argument('--check_point', default='checkpoints', help='the dir to save the checkpoint')
                         
 
     args = parser.parse_args()
@@ -191,7 +200,7 @@ def main(image_type):
         scheduler.step()
 
     if args.save_model:
-        torch.save(model.state_dict(), "test.pt")
+        torch.save(model.state_dict(), os.path.join(args.check_point,"test.pt"))
 
 
 if __name__ == '__main__':

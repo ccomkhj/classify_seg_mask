@@ -29,8 +29,6 @@ def set_files(train_data_path, test_data_path):
 
     #1.
     # get all the paths from train_data_path and append image paths and class to to respective lists
-    # eg. train path-> 'images/train/26.Pont_du_Gard/4321ee6695c23c7b.jpg'
-    # eg. class -> 26.Pont_du_Gard
     for data_path in glob.glob(train_data_path + '/*'):
         classes.append(data_path.split('/')[-1]) 
         train_image_paths.append(glob.glob(data_path + '/*'))
