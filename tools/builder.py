@@ -1,17 +1,12 @@
 from torch.utils.data import Dataset
-
 import cv2
 import glob
-import numpy as np
 import random
-import copy
 
 from loguru import logger
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('TkAgg')
-
-
 
 
 def flatten(t):
@@ -21,15 +16,12 @@ def flatten(t):
 #       Create Train, Valid and Test sets
 ####################################################
 def set_files(train_data_path, test_data_path):
-    # train_data_path = 'images/train' 
-    # test_data_path = 'images/test'
-
     train_image_paths = [] #to store image paths in list
     classes = [] #to store class values
 
     #1.
     # get all the paths from train_data_path and append image paths and class to to respective lists
-    for data_path in glob.glob(train_data_path + '/*'):
+    for data_path in sorted(glob.glob(train_data_path + '/*')):
         classes.append(data_path.split('/')[-1]) 
         train_image_paths.append(glob.glob(data_path + '/*'))
         
@@ -40,18 +32,14 @@ def set_files(train_data_path, test_data_path):
     logger.info(f'classes: {classes}')
 
     #2.
-    # split train valid from train paths (80,20)
-    train_image_paths, valid_image_paths = train_image_paths[:int(0.8*len(train_image_paths))], train_image_paths[int(0.8*len(train_image_paths)):] 
-
-    #3.
     # create the test_image_paths
     test_image_paths = []
-    for data_path in glob.glob(test_data_path + '/*'):
+    for data_path in sorted(glob.glob(test_data_path + '/*')):
         test_image_paths.append(glob.glob(data_path + '/*'))
 
     test_image_paths = list(flatten(test_image_paths))
 
-    logger.info("Train size: {}, Valid size: {}, Test size: {}".format(len(train_image_paths), len(valid_image_paths), len(test_image_paths)))
+    logger.info("Train size: {}, Test size: {}".format(len(train_image_paths), len(test_image_paths)))
 
     #######################################################
     #      Create dictionary for class indexes
@@ -60,7 +48,7 @@ def set_files(train_data_path, test_data_path):
     idx_to_class = {i:j for i, j in enumerate(classes)}
     class_to_idx = {value:key for key,value in idx_to_class.items()}
 
-    return train_image_paths, valid_image_paths, test_image_paths, class_to_idx 
+    return train_image_paths, test_image_paths, class_to_idx, idx_to_class 
 
 
 
@@ -84,37 +72,15 @@ class SymbolDataset(Dataset):
         if self.image_type == 'RGB':
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
         else:
-            image = image
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
 
-        label = image_filepath.split('/')[-2]
-        label = self.class_to_idx[label]
+        label_name = image_filepath.split('/')[-2]
+        label = self.class_to_idx[label_name]
         if self.transform is not None:
             image = self.transform(image=image)["image"]
         
         return image, label
     
-#######################################################
-#                  Visualize Dataset
-#         Images are plotted after augmentation
-#######################################################
 
-def visualize_augmentations(dataset, idx=0, samples=10, cols=5, random_img = False):
-    
-    dataset = copy.deepcopy(dataset)
-    #we remove the normalize and tensor conversion from our augmentation pipeline
-    dataset.transform = A.Compose([t for t in dataset.transform if not isinstance(t, (A.Normalize, ToTensorV2))])
-    rows = samples // cols
-    
-        
-    figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=(12, 8))
-    for i in range(samples):
-        if random_img:
-            idx = np.random.randint(1,len(train_image_paths))
-        image, lab = dataset[idx]
-        ax.ravel()[i].imshow(image)
-        ax.ravel()[i].set_axis_off()
-        ax.ravel()[i].set_title(idx_to_class[lab])
-    plt.tight_layout(pad=1)
-    plt.show()    
 
-# visualize_augmentations(train_dataset, np.random.randint(1,len(train_image_paths)), random_img = True)
+

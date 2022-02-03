@@ -2,3 +2,4 @@ images/
 *.pyc
 *.png
 *.jpg
+*.pt
