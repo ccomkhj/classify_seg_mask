@@ -9,7 +9,7 @@ import cv2
 import matplotlib.pyplot as plt
 from loguru import logger
 
-plant_targets = ['basil', 'kopf salad']
+plant_targets = ['kopf_salad', 'kopf salad'] # First element should be basil.
 symbol_targets = ['Left', 'Left_Right', 'Right', 'Straight', 'Straight_Left', 'Straight_Right', 'Unknown']
 
 def parse_args():
